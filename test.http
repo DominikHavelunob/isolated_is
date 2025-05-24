@@ -1,0 +1,65 @@
+###
+GET http://127.0.0.1:8000/mechanici/
+accept: application/json
+
+
+###
+GET http://127.0.0.1:8000/zakaznici/
+accept: application/json
+
+
+###
+GET http://127.0.0.1:8000/zakazky/
+accept: application/json
+
+
+// ~~~~~~~~ [ ZAKAZKY - POST ] ~~~~~~~~
+###
+POST http://127.0.0.1:8000/zakazky/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "popis": "Výměna brzdových destiček",
+  "stav": "probíhá",
+  "datum_prijmu": "2025-05-22",
+  "datum_predani": "2025-05-29",
+  "auto_znacka": "BMW",
+  "auto_model": "E46",
+  "auto_vin": "WBAEV31070KL12345",
+  "cena": 12500.50,
+  "zakaznik_id": 3,
+  "mechanik_id": 2
+}
+
+
+// ~~~~~~~~ [ MECHANICI - POST ] ~~~~~~~~
+###
+POST http://127.0.0.1:8000/mechanici/
+Content-Type: application/json
+Accept: application/json
+
+{
+  "jmeno": "Testovaci_mechanik",
+  "prijmeni": "password1",
+  "heslo": "password1",
+  "telefon": "123 456 789",
+  "role_ids": [1]
+}
+
+
+// ~~~~~~~~ [ ZAKAZNICI - POST ] ~~~~~~~~
+###
+POST http://127.0.0.1:8000/zakaznici/
+Content-Type: application/json
+Accept: application/json
+
+{
+  "jmeno": "Testovaci_zakaznik",
+  "prijmeni": "password1",
+  "email": "test.zakaznik@example.com",
+  "telefon": "123 456 789",
+  "adresa": "Nekde",
+  "heslo": "password1"
+}
