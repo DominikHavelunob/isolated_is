@@ -1,13 +1,25 @@
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
-from datetime import date
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, List
+from uuid import UUID
+from datetime import date, datetime
+
+# --- ADMIN ---
+class AdminBase(BaseModel):
+    jmeno: str
+    prijmeni: str
+    email: EmailStr
+
+class AdminCreate(AdminBase):
+    heslo: str
+
+class Admin(AdminBase):
+    id: UUID
+
+    class Config:
+        from_attributes = True
 
 
-
-
-
-
-# ==== Role ====
+# --- ROLE ---
 class RoleBase(BaseModel):
     nazev: str
 
@@ -15,96 +27,129 @@ class RoleCreate(RoleBase):
     pass
 
 class Role(RoleBase):
-    id: int
+    id: UUID
+
     class Config:
-        orm_mode = True
-
-# ==== Role ====
+        from_attributes = True
 
 
-
-
-# ==== Mechanik ====
+# --- MECHANIK ---
 class MechanikBase(BaseModel):
     jmeno: str
     prijmeni: str
     email: EmailStr
-    telefon: Optional[str]
+    telefon: Optional[str] = None
 
-class MechanikCreate(BaseModel):
-    jmeno: str
-    prijmeni: str
+class MechanikCreate(MechanikBase):
     heslo: str
-    telefon: Optional[str]
-    role_ids: List[int] = []
+    role_ids: Optional[List[UUID]] = []
+
+class MechanikUpdate(MechanikBase):
+    heslo: Optional[str] = None
+    role_ids: Optional[List[UUID]] = []
 
 class Mechanik(MechanikBase):
-    id: int
-    # pripadna zmena na role: List[Role] = []
-    role: List["Role"] = []
+    id: UUID
+    role: List[Role] = []
+
     class Config:
-        orm_mode = True
-
-# ==== Mechanik ====
+        from_attributes = True
 
 
-
-
-
-
-# ==== Zakaznik ====
+# --- ZAKAZNIK ---
 class ZakaznikBase(BaseModel):
     jmeno: str
     prijmeni: str
     email: EmailStr
-    telefon: Optional[str]
-    adresa: Optional[str]
+    telefon: Optional[str] = None
+    adresa: Optional[str] = None
 
 class ZakaznikCreate(ZakaznikBase):
     heslo: str
 
+class ZakaznikUpdate(ZakaznikBase):
+    heslo: Optional[str] = None
+
 class Zakaznik(ZakaznikBase):
-    id: int
+    id: UUID
+    anonymizovan: bool
+    smazano: bool
+
     class Config:
-        orm_mode = True
-
-# ==== Zakaznik ====
+        from_attributes = True
 
 
-
-
-# ==== Zakazka ====
+# --- ZAKAZKA ---
 class ZakazkaBase(BaseModel):
     popis: str
     stav: Optional[str] = "otevřená"
-    datum_prijmu: Optional[date]
-    datum_predani: Optional[date]
-    auto_znacka: Optional[str]
-    auto_model: Optional[str]
-    auto_vin: Optional[str]
-    cena: Optional[float]
-    zakaznik_id: int
-    mechanik_id: int
+    hotova: Optional[bool] = False
+    datum_prijmu: Optional[date] = None
+    datum_predani: Optional[date] = None
+    auto_znacka: Optional[str] = None
+    auto_model: Optional[str] = None
+    auto_vin: Optional[str] = None
+    cena: Optional[float] = None
 
 class ZakazkaCreate(ZakazkaBase):
-    pass
+    zakaznik_id: UUID
+    mechanik_id: Optional[UUID] = None
+    vytvoril_id: Optional[UUID] = None
 
-class Zakazka(ZakazkaBase):
-    id: int
+class ZakazkaUpdate(BaseModel):
+    popis: Optional[str] = None
+    stav: Optional[str] = None
+    hotova: Optional[bool] = None
+    datum_prijmu: Optional[date] = None
+    datum_predani: Optional[date] = None
+    auto_znacka: Optional[str] = None
+    auto_model: Optional[str] = None
+    auto_vin: Optional[str] = None
+    cena: Optional[float] = None
+    anonymizovana: Optional[bool] = None
+    smazano: Optional[bool] = None
+    zakaznik_id: Optional[UUID] = None
+    mechanik_id: Optional[UUID] = None
+    vytvoril_id: Optional[UUID] = None
+
     class Config:
         orm_mode = True
 
-# ==== Zakazka ====
+class Zakazka(ZakazkaBase):
+    id: UUID
+    anonymizovana: bool
+    smazano: bool
+    zakaznik_id: UUID
+    mechanik_id: UUID
+    vytvoril_id: Optional[UUID] = None
 
+    class Config:
+        from_attributes = True
 
+# --- LOGY ZAKAZKY ---
+class LogZakazkyBase(BaseModel):
+    akce: str
+    popis: Optional[str] = None
 
-# ==== Token ====
+class LogZakazkyCreate(LogZakazkyBase):
+    zakazka_id: UUID
+    provedl_id: UUID
+
+class LogZakazky(LogZakazkyBase):
+    id: UUID
+    zakazka_id: UUID
+    provedl_id: UUID
+    datum: datetime
+
+    class Config:
+        from_attributes = True
+
+# --- TOKENY (pro autentizaci) ---
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    sub: Optional[str] = None
     typ_uzivatele: Optional[str] = None
 
-# ==== Token ====

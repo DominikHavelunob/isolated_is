@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 
 
-from app.routers import auth, mechanici, zakaznici, zakazky
+from app.routers import admini, auth, mechanici, zakaznici, zakazky
 
 
 
@@ -29,6 +29,7 @@ app.add_middleware(
 )
 
 # pridavani routeru
+app.include_router(admini.router)
 app.include_router(auth.router)
 app.include_router(mechanici.router)
 app.include_router(zakaznici.router)
