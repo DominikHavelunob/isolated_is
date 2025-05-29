@@ -88,12 +88,18 @@ def registrace_mechanika(
 
 @router.post("/registrace/zakaznik", response_model=schemas.Zakaznik)
 def registrace_zakaznika(zakaznik: schemas.ZakaznikCreate, db: Session = Depends(get_db)):
-    existujici = db.query(models.Zakaznik).filter(
+    shodny_email = db.query(models.Zakaznik).filter(
         models.Zakaznik.email == zakaznik.email,
         models.Zakaznik.smazano == False,
         models.Zakaznik.anonymizovan == False
     ).first()
-    if existujici:
+    if shodny_email:
+        raise HTTPException(status_code=400, detail="Email už existuje")
+    
+    shodny_email_mechanika = db.query(models.Mechanik).filter(
+        models.Mechanik.email == zakaznik.email,
+    ).first()
+    if shodny_email_mechanika:
         raise HTTPException(status_code=400, detail="Email už existuje")
 
     if not minimalni_heslo(zakaznik.heslo):

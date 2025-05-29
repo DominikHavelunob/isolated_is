@@ -9,7 +9,8 @@ from app.utils import (
     item_not_found_exception,
     je_admin,
     je_vedouci_mechanik,
-    je_mechanik
+    je_mechanik,
+    zakazka_logger
 )
 
 router = APIRouter(prefix="/zakazky", tags=["Zakázky"])
@@ -113,11 +114,26 @@ def vytvorit_zakazku(
 #        vytvoril_id=user.id if je_mechanik(current) else None
     )
 
+    # db.add(nova_zakazka)
+    # db.commit()
+    # db.refresh(nova_zakazka)
+    # return nova_zakazka
     db.add(nova_zakazka)
     db.commit()
     db.refresh(nova_zakazka)
-    return nova_zakazka
 
+    # log test, zavedeni 
+    zakazka_logger.info(
+        "Zakázka vytvořena",
+        extra={
+            "zakazka_id": nova_zakazka.id,  # POZOR TADY!
+            "provedl_id": user.id,
+            "akce": "vytvoreni"
+        }
+    )
+
+    return nova_zakazka
+    # konec testu logu
 
 # @router.post("/", response_model=schemas.Zakazka)
 # def vytvorit_zakazku(
@@ -191,16 +207,16 @@ def upravit_zakazku(
     if not zakazka:
         raise item_not_found_exception
 
-    # --- ADMIN nebo VEDOUCI_MEKANIK mohou měnit vše ---
+    # --- ADMIN nebo VEDOUCI_MEKANIK mohou menit vse
     if je_admin(current) or je_vedouci_mechanik(current):
-        # Získáme jen ta pole, která uživatel opravdu poslal (ne None)
+
         for k, v in zakazka_update.dict(exclude_unset=True).items():
             setattr(zakazka, k, v)
         db.commit()
         db.refresh(zakazka)
         return zakazka
 
-    # --- MECHANIK může měnit pouze svou zakázku (stav, popis) ---
+    # --- MECHANIK muze menit pouze svou zakazku
     if je_mechanik(current) and zakazka.mechanik_id == user.id:
         for pole in ["stav", "popis"]:
             hodnota = getattr(zakazka_update, pole, None)
@@ -208,6 +224,14 @@ def upravit_zakazku(
                 setattr(zakazka, pole, hodnota)
         db.commit()
         db.refresh(zakazka)
+        # zakazka_logger.info(
+        #     "Zakázka upravena",
+        #     extra={
+        #         "zakazka_id": models.Zakazka.id,
+        #         "provedl_id": user.id,
+        #         "akce": "uprava zakazky"
+        #         }
+        # )
         return zakazka
 
     raise user_exception

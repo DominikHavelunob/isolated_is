@@ -7,6 +7,11 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models
+import logging
+from app.database import SessionLocal
+from app.models import LogZakazky
+from datetime import datetime
+import uuid
 import os
 
 
@@ -139,3 +144,29 @@ def je_mechanik(current=Depends(get_current_user)) -> bool:
         return True
     return False
 
+
+
+class ZakazkaLogHandler(logging.Handler):
+    def emit(self, record):
+        session = SessionLocal()
+        try:
+            log_entry = LogZakazky(
+                id=uuid.uuid4(),
+                zakazka_id=getattr(record, "zakazka_id", None),
+                provedl_id=getattr(record, "provedl_id", None),
+                akce=getattr(record, "akce", record.levelname),  # např. "vytvoreni", "uprava"...
+                popis=record.getMessage(),
+                datum=datetime.utcnow()
+            )
+            session.add(log_entry)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+        finally:
+            session.close()
+
+zakazka_logger = logging.getLogger("zakazka_logger")
+zakazka_logger.setLevel(logging.INFO)
+
+db_handler = ZakazkaLogHandler()
+zakazka_logger.addHandler(db_handler)
